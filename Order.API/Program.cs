@@ -1,15 +1,54 @@
+using MassTransit;
+using Microsoft.EntityFrameworkCore;
+using Order.API.Consumers;
+using Order.API.Models;
+using Shared;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Konfigürasyon ekleyin
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(builder.Environment.ContentRootPath)
+    .AddJsonFile("appsettings.json")
+    .Build();
+
+// Servisleri konteynýra ekleyin.
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<OrderRequestCompletedEventConsumer>();
+    x.AddConsumer<OrderRequestFailedEventConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(configuration.GetConnectionString("RabbitMQ"));
+
+        cfg.ReceiveEndpoint(RabbitMQSettingsConst.OrderRequestCompletedEventtQueueName, x =>
+        {
+            x.ConfigureConsumer<OrderRequestCompletedEventConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint(RabbitMQSettingsConst.OrderRequestFailedEventtQueueName, x =>
+        {
+            x.ConfigureConsumer<OrderRequestFailedEventConsumer>(context);
+        });
+    });
+});
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseSqlServer(configuration.GetConnectionString("SqlCon"));
+});
+
+// services.AddMassTransitHostedService();
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Swagger/OpenAPI'nin nasýl yapýlandýrýlacaðýný daha fazla öðrenmek için https://aka.ms/aspnetcore/swashbuckle adresine gidin
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// HTTP istek iþleme boru hattýný yapýlandýrýn.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
