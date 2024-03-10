@@ -28,6 +28,7 @@ namespace Order.API.Controllers
             var newOrder = new Models.Order
             {
                 BuyerId = orderCreate.BuyerId,
+                FailMessage = orderCreate.FailMessage,
                 Status = OrderStatus.Suspend,
                 Address = new Address { Line = orderCreate.Address.Line, Province = orderCreate.Address.Province, District = orderCreate.Address.District },
                 CreatedDate = DateTime.Now
