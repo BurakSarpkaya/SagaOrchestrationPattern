@@ -6,12 +6,6 @@ using Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Konfigürasyon ekleyin
-var configuration = new ConfigurationBuilder()
-    .SetBasePath(builder.Environment.ContentRootPath)
-    .AddJsonFile("appsettings.json")
-    .Build();
-
 // Servisleri konteynýra ekleyin.
 builder.Services.AddMassTransit(x =>
 {
@@ -20,7 +14,7 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(configuration.GetConnectionString("RabbitMQ"));
+        cfg.Host(builder.Configuration.GetConnectionString("RabbitMQ"));
 
         cfg.ReceiveEndpoint(RabbitMQSettingsConst.OrderRequestCompletedEventtQueueName, x =>
         {
@@ -36,7 +30,7 @@ builder.Services.AddMassTransit(x =>
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseSqlServer(configuration.GetConnectionString("SqlCon"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlCon"));
 });
 
 // services.AddMassTransitHostedService();
